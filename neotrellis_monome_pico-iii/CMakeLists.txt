@@ -80,6 +80,8 @@ add_executable(neotrellis-iii
     ${CMAKE_SOURCE_DIR}/src/iii/resource/lib_lua.c
 )
 
+target_compile_definitions(neotrellis-iii PRIVATE PICO_DIVIDER_IN_RAM=1)
+
 # ====================================================================================
 
 # UPDATE HERE FOR YOUR BOARD AND BUILD

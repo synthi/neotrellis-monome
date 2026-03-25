@@ -73,7 +73,7 @@ int main() {
 
     SetupBoard();
     device_init(); // NeoTrellis hardware init
-    tusb_init();   // enable USB
+    tud_init(BOARD_TUD_RHPORT);
 
     // Give USB time to stabilize
     sleep_ms(500);
