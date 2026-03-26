@@ -99,11 +99,15 @@ static void grid_add_event(uint8_t x, uint8_t y, uint8_t z) {
 // LED update helpers
 // ---------------------------------------------------------------------------
 
+static uint8_t led_r = R;
+static uint8_t led_g = G;
+static uint8_t led_b = B;
+
 static inline uint32_t level_to_color(uint8_t val) {
     uint8_t gval = (uint8_t)((uint16_t)gammaTable[val] * gammaAdj);
-    return (((uint32_t)((uint16_t)gval * R) / 256) << 16)
-         | (((uint32_t)((uint16_t)gval * G) / 256) << 8)
-         |  ((uint32_t)((uint16_t)gval * B) / 256);
+    return (((uint32_t)((uint16_t)gval * led_r) / 256) << 16)
+         | (((uint32_t)((uint16_t)gval * led_g) / 256) << 8)
+         |  ((uint32_t)((uint16_t)gval * led_b) / 256);
 }
 
 static void sendLeds_iii() {
@@ -342,6 +346,12 @@ extern "C" void device_intensity(int z) {
 extern "C" void device_mark_dirty(void) { grid_dirty = true; }
 extern "C" int  device_cols(void)       { return NUM_COLS; }
 extern "C" int  device_rows(void)       { return NUM_ROWS; }
+extern "C" void device_color_set(int r, int g, int b) {
+    led_r = (uint8_t)r;
+    led_g = (uint8_t)g;
+    led_b = (uint8_t)b;
+    grid_dirty = true;
+}
 
 // ---------------------------------------------------------------------------
 // Device info strings

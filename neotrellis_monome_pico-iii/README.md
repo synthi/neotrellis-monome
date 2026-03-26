@@ -11,19 +11,26 @@ Install the Raspberry Pi Pico VS Code Extension from the Extensions tab in VSCod
 
 Look at the `# UPDATE HERE FOR YOUR BOARD AND BUILD` sections of `CMakeLists.txt` to configure for your specific board. This *should* be the only configuration changes needed.  
 
-`# SET BOARD TYPE`
+```
+# SET BOARD TYPE
+# board type can be:
+# pico  (included in Pico SDK)
+# adafruit_kb2040  (included in Pico SDK)
+# board_dinkii  (included in neotrellis repo)
+# adafruit_feather_rp2040  (included in Pico SDK)
 
-pico  (included in Pico SDK)  
-adafruit_kb2040  (included in Pico SDK)  
-board_dinkii  (included in neotrellis repo)  
-adafruit_feather_rp2040  (included in Pico SDK)   
+set(PICO_BOARD pico CACHE STRING "Board type")
 
-`# UPDATE HERE FOR YOUR BOARD AND BUILD`
-`# Build defines`
+```
+and then further down, look for...  
+
+```
+# Build defines
+```
 
 Set these according to your specific build  
 ```
-    BOARDTYPE=1  # must be number - options are:  1=PICO, 2=KB2040QT, 3=DINKII, 4=FEATHER2040QT
+    BOARDTYPE=1   # must be number - options are:  1=PICO, 2=KB2040QT, 3=DINKII, 4=FEATHER2040QT
     GRIDCOUNT=3   # must be number - options are:  1=4X4, 2=8x8, 3=16x8, 4=16x16 
 ```
 
