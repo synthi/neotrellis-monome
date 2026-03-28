@@ -3,13 +3,12 @@
 
 ## What is it?
 
-Code to use a set of [Adafruit NeoTrellis boards](https://www.adafruit.com/product/3954) as a monome grid clone using an off-the-shelf microcontroller.
+Code to use a set of [Adafruit NeoTrellis boards](https://www.adafruit.com/product/3954) as a monome grid clone using an off-the-shelf microcontroller.  
 
-Tested mostly using a Teensy 3.2 microcontroller. Teensy 4 should work the same, but it does not have USB pads broken out to use a USB breakout board. 
+A number of different microcontrollers have been used for this project. Raspberry Pi Pico (rp2040) boards are the current recommended solution.  
 
-[There is code](neotrellis_monome_m0) for using an Adafruit SAMD21/51 M0/M4 boards like the Feather and ItsyBitsy, but this will probably require compiling the firmware for your specific board. Compiled firmwares for Feather M4 are in the repo.
+See the various subdirectories for code specific to different board types.  
 
-Code for [RP2040](neotrellis_monome_rp2040) is also available, but this will probably require compiling the firmware for your specific board.
 
 ## compatibility
 
@@ -21,11 +20,11 @@ Some people have reported issues with the neotrellis-grid getting recognized by 
 
 ### ansible / teletype / trilogy modules
 
-2021 updates to ansible / teletype / trilogy modules now support the neotrellis-grid. It should work without modifications.
+Older builds with Teensy should work with the monome modules. RP2040 devices have had problems and may not work with these modules.
 
-### norns /norns shield
+### norns / norns shield / shieldXL
 
-As of update version 210607 (June 2021) it should be plug and play. Previous versions are unsupported.
+As of update version 210607 (June 2021) it should be plug and play. 
 
 ###  Fates
 
@@ -79,27 +78,7 @@ A: No. The dink-ii board replaces the Flexi-PCB.
 
 * Don't worry about the INT pin - it's not used in the grid software.
 
-## firmware flashing - Teensy
 
-### Load pre-compiled firmware w/ TyUploader
-
-Get the firmware "hex" file from directory in this repo (download the entire repo ZIP file - not just individual files).
-
-Get TyTools [from GitHub here](https://github.com/Koromix/tytools/releases). More info here (https://koromix.dev/tytools).
-
-Install TyUploader and open it. Be sure your neotrellis-grid is plugged in. The grid/Teensy should show up in the TyUploader application... or select Teensy or Teensyduino from the pull down menu if needed.
-
-<img src="images/tyuploader.png" alt="tyupdater" width="319" height="190" />
-
-Click the Upload button and select the firmware hex file you want to upload. This should upload the firmware and the neotrellis-grid should reboot. That's it.
-
-### If you want to copile the firmware yourself to make changes, etc...
-
-In Arduino/Teensyduino - be sure you have the settings in  `Tools -> USB Type` set to `Serial`
-
-Not critical, but set `Tools -> CPU Speed` to `120 MHz (overclock)`
-
-For reference: [here's a forum post on how to flash Teensy firmware](https://llllllll.co/t/how-to-flash-the-firmware-on-a-teensy-micro-controller/20317)
 
 ## other microcontrollers  
 
@@ -110,7 +89,7 @@ See the repo directories for using the Adafruit Neotrellis M4 device (8x4 grid) 
 
 * Triple check your address jumpers - [see this graphic](neotrellis_addresses.jpg) for a default layout of addresses and jumper positions for 8 neotrellis boards.
 
-* Be sure you have the Adafruit Seesaw libraries installed and are up to date (via the Arduino/Teensyduino Library Manager)
+* With Arduino - Be sure you have the Adafruit Seesaw libraries installed and are up to date (via the Arduino/Teensyduino Library Manager)
 
 * Use the [multitrellis_test](multitrellis_test/multitrellis_test.ino) sketch to test fully assembled grid before flashing neotrellis_monome_teensy.
 
@@ -118,10 +97,6 @@ See the repo directories for using the Adafruit Neotrellis M4 device (8x4 grid) 
 
 * There are Teensy specific `i2c_t3` example sketches which can be used to double check your i2c addresses. See `File>Examples>i2c_t3>basic_scanner` in Arduino/Teensyduino for more.
 
-
-## build help / support / troubleshooting
-
-[see this thread](https://llllllll.co/t/diy-monome-compatible-grid-w-adafruit-neotrellis/28106?u=okyeron) on the lines forum for assistance.
 
 ## alternate firmware for color palettes 
 
