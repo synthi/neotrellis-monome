@@ -15,19 +15,19 @@
  *
 */
 
-
 #include "MonomeSerialDevice.h"
 #include <Adafruit_NeoTrellis.h>
 
 // SET TOOLS USB STACK TO TinyUSB
 
-// IF USING ADAFRUIT M0 or M4 BOARD
+// IF USING ADAFRUIT M0 or M4 BOARD - DONT CHANGE
 #define M0 1
 #include <Arduino.h>
 #include <Adafruit_TinyUSB.h>
 #include <elapsedMillis.h>
 
 
+// MODIFY FOR YOUR BOARD DIMENSIONS
 #define NUM_ROWS 4 // DIM_Y number of rows of keys down
 #define NUM_COLS 4 // DIM_X number of columns of keys across
 #define NUM_LEDS NUM_ROWS*NUM_COLS
@@ -150,7 +150,7 @@ void setup(){
 
 	USBDevice.setManufacturerDescriptor(mfgstr);
 	USBDevice.setProductDescriptor(prodstr);
-  USBDevice.setSerialDescriptor(serialstr);
+	USBDevice.setSerialDescriptor(serialstr);
   
   Serial.begin(115200);
   
@@ -194,12 +194,14 @@ void setup(){
 	mdp.setAllLEDs(0);
 	sendLeds();
 	
+    
+  	// for(int i=0; i< NUM_ROWS * NUM_COLS; i++){
+		//  trellis.setPixelColor(i, 0xFFFFFF);
+		//   trellis.show();
+		//   delay(50);
+	  // }
+
     // blink one led to show it's started up
-  	for(int i=0; i< NUM_ROWS * NUM_COLS; i++){
-		 trellis.setPixelColor(i, 0xFFFFFF);
-		  trellis.show();
-		  delay(50);
-	}
     trellis.setPixelColor(0, 0xFFFFFF);
     trellis.show();
     delay(100);
