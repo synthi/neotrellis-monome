@@ -4,3 +4,6 @@
 [submodule "neotrellis_monome_picosdk_iii/src/littlefs"]
 	path = neotrellis_monome_picosdk_iii/src/littlefs
 	url = https://codeberg.org/tehn/littlefs
+[submodule "neotrellis_monome_picosdk_iii/src/lua"]
+	path = neotrellis_monome_picosdk_iii/src/lua
+	url = https://codeberg.org/tehn/lua.git
