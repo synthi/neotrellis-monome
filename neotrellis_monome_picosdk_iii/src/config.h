@@ -111,7 +111,7 @@ const uint8_t addrRowTwo[4] = {0x33,0x31,0x3E,0x36};
 
 // Depending on your controller, you may need to adjust
 // this brightness to a lower value
-#define BRIGHTNESS  96      // overall brightness (lower = dimmer; may need reduction for larger grids)
+#define BRIGHTNESS  96     // overall brightness (lower = dimmer; may need reduction for larger grids)
 
 // use gammaTable and gammaAdj below to adjust levels
 

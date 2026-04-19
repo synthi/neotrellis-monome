@@ -1,6 +1,5 @@
 /*
- * device.cpp - NeoTrellis device implementation for iii (PALETTED EDITION V2)
- * FORENSICALLY CORRECTED ENGINE
+ * device.cpp - NeoTrellis device implementation for iii (PALETTED EDITION V3 - EXACT MATH)
  */
 
 #include "MonomeSerialDevice.h"
@@ -68,7 +67,7 @@ static void grid_add_event(uint8_t x, uint8_t y, uint8_t z) {
 }
 
 // ===========================================================================
-// INYECCIÓN FORENSE: MOTOR DE PALETAS CORREGIDO (ANTI-CRUSH)
+// INYECCIÓN FORENSE: MATEMÁTICA EXACTA DEL TEENSY Y NUEVAS PALETAS
 // ===========================================================================
 
 static const uint8_t allpalettes[25][3][16] = {
@@ -83,27 +82,34 @@ static const uint8_t allpalettes[25][3][16] = {
   {{0, 24, 30, 47, 62, 79, 96, 111, 127, 143, 159, 175, 191, 207, 223, 240},{0, 15, 25, 39, 64, 86, 107, 129, 150, 169, 188, 200, 211, 224, 236, 244},{77, 101, 128, 132, 136, 138, 139, 140, 140, 149, 158, 175, 191, 209, 224, 237}},
   {{0, 10 ,11, 12, 13, 14, 15, 16, 20, 25, 35, 45, 55, 65, 75, 88},{100, 115, 133, 150, 159, 167, 175, 180, 185, 189, 197, 205, 213, 220, 230, 240},{102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102}},
   {{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},{0, 14, 30, 47, 62, 79, 96, 111, 127, 143, 159, 175, 191, 207, 223, 240},{255, 247, 239, 231, 223, 215, 207, 199, 190, 183, 175, 167, 159, 150, 143, 135}},
-  // ESCALA 12 (Index 11) - RESTAURADA A SU ESTADO ORIGINAL PERFECTO
   {{0, 14, 30, 47, 62, 79, 96, 111, 127, 143, 159, 175, 191, 207, 223, 240},{127, 135, 143, 150, 159, 167, 175, 183, 191, 199, 207, 215, 223, 231, 239, 247},{102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102}},
+  // ESCALA 12 (Index 12) - LA ORIGINAL INTACTA
   {{0, 14, 30, 47, 62, 79, 96, 111, 127, 143, 159, 175, 191, 207, 223, 240},{127, 135, 143, 150, 159, 167, 175, 183, 191, 199, 207, 215, 223, 231, 239, 247},{0, 14, 30, 37, 42, 59, 66, 71, 87, 93, 109, 115, 121, 127, 127, 127}},
   {{107, 115, 123, 130, 139, 147, 155, 163, 171, 179, 187, 195, 203, 211, 229, 247},{0, 14, 30, 37, 42, 75, 96, 111, 127, 143, 159, 175, 191, 207, 223, 240},{30, 30, 30, 30, 30, 40, 50, 60, 67, 73, 89, 95, 101, 102, 102, 103}},
   {{0,43,52,66,80,95,110,125,140,155,170,185,200,215,230,250},{0,43,52,66,80,95,110,125,140,155,170,185,200,215,230,250},{0, 4, 5, 6, 7, 8, 9, 11, 15, 25, 39, 57, 78, 101, 126, 152}},
-  {{0, 44, 47, 57, 67, 78, 88, 98, 108, 118, 129, 140, 150, 167, 193, 220},{0, 0, 0, 0, 0, 0, 0, 0, 8, 12, 14, 18, 24, 30, 38, 45},{0, 0, 0, 0, 0, 0, 0, 0, 8, 12, 14, 18, 24, 30, 38, 45}},
-  {{0, 77, 89, 101, 107, 124, 135, 146, 156, 166, 175, 184, 193, 202 ,211 ,222},{0, 0, 0, 0, 0, 0, 0, 0, 13, 42, 62, 80, 103, 144, 162, 182},{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 33, 44, 66}},
-  {{1, 35, 72, 102, 140, 180, 211, 235, 254, 248, 238, 223, 206, 184, 148, 110},{66, 73, 76, 68, 81, 102, 128, 159, 188, 166, 155, 162, 164, 168, 183, 176},{158, 189, 219, 239, 248, 253, 253, 254, 253, 239, 213, 178, 134, 93, 61, 69}},
+  // ESCALA 15 (Index 15) - Rojo fuerte a Rosa Claro
+  {{0, 100, 120, 140, 160, 180, 200, 215, 230, 240, 250, 255, 255, 255, 255, 255},{0, 0, 0, 0, 0, 10, 25, 45, 65, 85, 110, 135, 160, 185, 210, 230},{0, 0, 0, 5, 15, 30, 50, 70, 90, 110, 135, 160, 185, 210, 230, 245}},
+  // ESCALA 16 (Index 16) - Rojo -> Naranja -> Warm White
+  {{0, 120, 140, 160, 180, 200, 220, 240, 255, 255, 255, 255, 255, 255, 255, 255},{0, 0, 10, 25, 45, 65, 85, 105, 125, 145, 165, 185, 200, 215, 230, 245},{0, 0, 0, 0, 0, 0, 0, 0, 10, 30, 50, 75, 100, 130, 160, 190}},
+  // ESCALA 17 (Index 17) - Blanco Azulado
+  {{0, 0, 0, 5, 15, 30, 50, 70, 90, 110, 130, 150, 170, 190, 210, 230},{0, 10, 25, 45, 65, 85, 105, 125, 145, 165, 185, 205, 220, 235, 245, 255},{0, 40, 60, 80, 100, 120, 140, 160, 180, 200, 215, 230, 240, 250, 255, 255}},
   {{0, 5, 15, 27, 40, 51, 58, 66, 92, 125, 152, 178, 188, 201, 219, 237},{0, 17, 55, 87, 114, 132, 141, 150, 160, 169, 175, 182, 170, 166, 182, 212},{0, 117, 120, 123, 126, 118, 99, 79, 75, 83, 88, 93, 98, 119, 159, 206}},
   {{0, 46, 57, 70, 93, 114, 136, 159, 184, 206, 228, 251, 255, 255, 255, 255},{0, 58, 72, 95, 110, 124, 139, 152, 164, 177, 191, 199, 208, 212, 213, 226},{0, 53, 54, 73, 77, 82, 92, 103, 114, 127, 151, 173, 195, 214, 227, 247}},
-  {{81, 103, 122, 139, 155, 173, 188, 203, 218, 232, 245, 251, 243, 234, 226, 217},{172, 167, 161, 156, 151, 150, 149, 148, 145, 138, 129, 131, 149, 166, 181, 196},{221, 214, 207, 199, 190, 176, 160, 143, 125, 110, 94, 79, 70, 59, 47, 31}},
-  {{0,44, 24, 1,0,65, 129,197,254,228,198,168,131,163,196,237},{0,64 ,104,149,192,217,229,243,253,220,182,143,96, 137,180,231},{0,166,206,251,136,115,127,141,152,138,122,106,88 ,131,177,230}},
-  {{0,0,0,0,0,0,0,0,0,0,0,20, 96, 137,197,246},{0,124,82,99, 63, 26, 7,24, 48, 75, 116,137,175,196,226,250},{0,2,30,19, 43, 67, 89, 101,117,135,163,177,202,216,236,252}},
-  {{0,0,0,31, 62, 85, 101,117,134,154,175,190,206,229,239,253},{0,37, 47, 58, 75, 91, 104,117,131,147,163,176,188,207,216,231},{0,84, 109,110,107,109,112,117,120,118,112,106,98, 80, 70, 55}},
+  // ESCALA 20 (Index 20) - Invertida (Dark Purple -> Bright Cyan)
+  {{0, 30, 40, 50, 60, 65, 70, 75, 80, 85, 90, 100, 120, 150, 180, 220},{0, 0, 10, 25, 45, 70, 95, 120, 145, 170, 195, 215, 230, 240, 250, 255},{0, 50, 70, 90, 110, 130, 150, 170, 190, 210, 225, 235, 245, 250, 255, 255}},
+  // ESCALA 21 (Index 21) - Fire (Black -> Red -> Yellow -> White)
+  {{0, 80, 110, 140, 170, 200, 230, 255, 255, 255, 255, 255, 255, 255, 255, 255},{0, 0, 0, 0, 10, 30, 60, 90, 120, 150, 180, 200, 220, 235, 245, 255},{0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 30, 60, 100, 150, 200, 255}},
+  // ESCALA 22 (Index 22) - Synthwave (Dark Blue -> Magenta -> Cyan -> White)
+  {{0, 10, 20, 40, 70, 110, 150, 190, 220, 240, 250, 230, 200, 180, 220, 255},{0, 0, 0, 0, 0, 10, 30, 60, 90, 130, 180, 220, 240, 250, 255, 255},{0, 60, 90, 120, 150, 180, 200, 220, 230, 240, 250, 255, 255, 255, 255, 255}},
+  // ESCALA 23 (Index 23) - Frio a Caliente (Blue -> Purple -> Red -> Orange -> Yellow)
+  {{0, 10, 30, 60, 100, 140, 180, 220, 250, 255, 255, 255, 255, 255, 255, 255},{0, 0, 0, 0, 10, 20, 30, 45, 65, 90, 120, 150, 180, 210, 235, 255},{0, 80, 120, 150, 170, 180, 170, 140, 100, 60, 30, 10, 0, 0, 50, 150}},
   {{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}}
 };
 
-// ESTADO POR DEFECTO: Escala 12 (Index 11), Nivel 4 (50%)
-static uint8_t selected_palette = 11;
+// ESTADO POR DEFECTO: Escala 12 (Index 12), Nivel 4 (Fila 3)
+static uint8_t selected_palette = 12;
 static uint8_t current_page = 1; 
-static uint8_t global_brightness_mult = 127; 
+static uint8_t dynamic_gamma_table[16];
 
 static bool key_13_7 = false;
 static bool key_14_7 = false;
@@ -112,25 +118,35 @@ static bool palette_ui_active = false;
 static bool palette_preview_active = false;
 static uint32_t palette_preview_start = 0;
 
+// LA FÓRMULA MATEMÁTICA EXACTA DE SU .INO ORIGINAL
 static void set_dynamic_gamma(uint8_t value) {
-    // Multiplicadores lineales: 100%, 83%, 66%, 50%, 33%, 16%, 8%
-    uint8_t multipliers[7] = {255, 212, 170, 127, 85, 42, 20};
-    if (value < 7) global_brightness_mult = multipliers[value];
+    float val_f = (float)value;
+    for (int i = 0; i < 16; i++) {
+        dynamic_gamma_table[i] = (uint8_t)( (((8.0 - val_f) / 8.0) * 255.0 / 15.0) * i );
+    }
 }
 
 static inline uint32_t level_to_color(uint8_t val) {
-    if (val == 0) return 0; // Nivel 0 siempre apagado (Estándar Monome)
+    if (val == 0) return 0; 
     
     uint32_t r = allpalettes[selected_palette][0][val];
     uint32_t g = allpalettes[selected_palette][1][val];
     uint32_t b = allpalettes[selected_palette][2][val];
     
-    // Multiplicador plano (Evita el aplastamiento cuadrático)
-    r = (r * global_brightness_mult) / 255;
-    g = (g * global_brightness_mult) / 255;
-    b = (b * global_brightness_mult) / 255;
-    
-    // Sistema Anti-Crush: Si la paleta tenía color, asegura que el LED encienda
+    uint32_t gam = dynamic_gamma_table[val];
+
+    // El aplastamiento cuadrático original que genera su contraste
+    r = (r * gam) / 255;
+    g = (g * gam) / 255;
+    b = (b * gam) / 255;
+
+    // Límite de brillo maestro por software (Equivalente a su antiguo BRIGHTNESS 128)
+    // Esto asume que en config.h pusieron BRIGHTNESS 255
+    r = (r * 128) / 255;
+    g = (g * 128) / 255;
+    b = (b * 128) / 255;
+
+    // Anti-Crush: Si la paleta tenía color, asegura que el LED no se apague por completo
     if (allpalettes[selected_palette][0][val] > 0 && r == 0) r = 1;
     if (allpalettes[selected_palette][1][val] > 0 && g == 0) g = 1;
     if (allpalettes[selected_palette][2][val] > 0 && b == 0) b = 1;
@@ -139,12 +155,12 @@ static inline uint32_t level_to_color(uint8_t val) {
 }
 
 static void draw_palette_ui() {
-    uint8_t multipliers[7] = {255, 212, 170, 127, 85, 42, 20};
     for(int y=0; y<7; y++){
-        uint8_t val = multipliers[y];
-        trellis.setPixelColor(y * NUM_COLS, (val << 16) | (val << 8) | val);
+        float val_f = (float)y;
+        uint8_t gam_val = (uint8_t)( (((8.0 - val_f) / 8.0) * 255.0 / 15.0) * 15 );
+        trellis.setPixelColor(y * NUM_COLS, (gam_val << 16) | (gam_val << 8) | gam_val);
     }
-    trellis.setPixelColor(7 * NUM_COLS, 0x444444); // Botón de página
+    trellis.setPixelColor(7 * NUM_COLS, 0x444444); 
 
     for(int y=0; y<8; y++){
         int pal_idx = y + (8 * current_page);
@@ -154,10 +170,15 @@ static void draw_palette_ui() {
                 uint32_t r = allpalettes[pal_idx][0][val];
                 uint32_t g = allpalettes[pal_idx][1][val];
                 uint32_t b = allpalettes[pal_idx][2][val];
+                uint32_t gam = dynamic_gamma_table[val];
                 
-                r = (r * global_brightness_mult) / 255;
-                g = (g * global_brightness_mult) / 255;
-                b = (b * global_brightness_mult) / 255;
+                r = (r * gam) / 255;
+                g = (g * gam) / 255;
+                b = (b * gam) / 255;
+                
+                r = (r * 128) / 255;
+                g = (g * 128) / 255;
+                b = (b * 128) / 255;
                 
                 if (allpalettes[pal_idx][0][val] > 0 && r == 0) r = 1;
                 if (allpalettes[pal_idx][1][val] > 0 && g == 0) g = 1;
@@ -250,9 +271,13 @@ static TrellisCallback keyCallback(keyEvent evt) {
                                 uint32_t r = allpalettes[selected_palette][0][val];
                                 uint32_t g = allpalettes[selected_palette][1][val];
                                 uint32_t b = allpalettes[selected_palette][2][val];
-                                r = (r * global_brightness_mult) / 255;
-                                g = (g * global_brightness_mult) / 255;
-                                b = (b * global_brightness_mult) / 255;
+                                uint32_t gam = dynamic_gamma_table[val];
+                                r = (r * gam) / 255;
+                                g = (g * gam) / 255;
+                                b = (b * gam) / 255;
+                                r = (r * 128) / 255;
+                                g = (g * 128) / 255;
+                                b = (b * 128) / 255;
                                 if (allpalettes[selected_palette][0][val] > 0 && r == 0) r = 1;
                                 if (allpalettes[selected_palette][1][val] > 0 && g == 0) g = 1;
                                 if (allpalettes[selected_palette][2][val] > 0 && b == 0) b = 1;
@@ -348,6 +373,7 @@ extern "C" void device_init() {
     memset(mmap,         0, sizeof(mmap));
     memset(prevLedBuffer, 0, sizeof(prevLedBuffer));
     
+    set_dynamic_gamma(3); // Inicializa en Nivel 4 (Fila 3)
     sendLeds_iii();
 
     gpio_put(LED_PIN, 0);
