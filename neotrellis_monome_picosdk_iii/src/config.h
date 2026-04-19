@@ -29,7 +29,7 @@
 
 // Which Grid - SIXTEEN, SIXTYFOUR, ONETWENTYEIGHT, TWOFIFTYSIX
 #ifndef GRIDCOUNT
-#define GRIDCOUNT SIXTYFOUR
+#define GRIDCOUNT ONETWENTYEIGHT
 #endif
 
 #if GRIDCOUNT == SIXTEEN
@@ -117,8 +117,8 @@ const uint8_t addrRowTwo[4] = {0x33,0x31,0x3E,0x36};
 
 // White
 #define R 255
-#define G 255
-#define B 255
+#define G 200
+#define B 90
 
 // Seafoam / Mint Green
 // #define R 73
@@ -138,13 +138,13 @@ static const uint8_t gammaAdj = 1;    // multiply gamma output by 1 or 2
 
 static const char* deviceID = "monome";
 /* -- NOT USED
-static const char* serialNum = "m4216126";
+static const char* serialNum = "m4216129";
 
 // DEVICE INFO FOR TinyUSB
 // static: prevents multiple-definition errors when included from multiple TUs
 static char mfgstr[32] = "monome";
 static char prodstr[32] = "grid";
-static char serialstr[32] = "m4216126";
+static char serialstr[32] = "m4216129";
 */
 
 #define mapRange(s,a1,a2,b1,b2) (b1 + (s-a1)*(b2-b1)/(a2-a1))
