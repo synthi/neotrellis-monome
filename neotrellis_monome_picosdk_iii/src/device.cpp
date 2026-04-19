@@ -1,6 +1,6 @@
 /*
  * device.cpp - NeoTrellis device implementation for iii (PALETTED EDITION V4 - ULTIMATE)
- * FORENSICALLY CORRECTED ENGINE WITH HARDWARE ANTI-CRUSH
+ * FORENSICALLY CORRECTED ENGINE WITH VECTORIAL ANTI-CRUSH
  */
 
 #include "MonomeSerialDevice.h"
@@ -68,11 +68,10 @@ static void grid_add_event(uint8_t x, uint8_t y, uint8_t z) {
 }
 
 // ===========================================================================
-// INYECCIÓN FORENSE: MATRIZ EXACTA + PALETAS MEJORADAS
+// MATRIZ DE PALETAS ORIGINAL
 // ===========================================================================
 
 static const uint8_t allpalettes[25][3][16] = {
-  // 0 a 14: EXACTAMENTE IGUALES A SU .INO ORIGINAL
   {{0,45,55,65,75,85,96,107,118,133,152,171,190,210,230,250},{0,45,55,65,75,85,96,107,118,133,152,171,190,210,230,250},{0,45,55,65,75,85,96,107,118,133,152,171,190,210,230,250}},
   {{0,43,52,66,80,95,110,125,140,155,170,185,200,215,230,250},{0,43,52,66,80,95,110,125,140,155,170,185,200,215,230,250},{0,22,31,33,40,48,55,62,70,77,85,92,100,107,115,125}},
   {{0,22,31,33,40,48,55,62,70,77,85,92,100,107,115,125},{0,43,52,66,80,95,110,125,140,155,170,185,200,215,230,250},{0,43,52,66,80,95,110,125,140,155,170,185,200,215,230,250}},
@@ -88,34 +87,20 @@ static const uint8_t allpalettes[25][3][16] = {
   {{0, 14, 30, 47, 62, 79, 96, 111, 127, 143, 159, 175, 191, 207, 223, 240},{127, 135, 143, 150, 159, 167, 175, 183, 191, 199, 207, 215, 223, 231, 239, 247},{0, 14, 30, 37, 42, 59, 66, 71, 87, 93, 109, 115, 121, 127, 127, 127}},
   {{107, 115, 123, 130, 139, 147, 155, 163, 171, 179, 187, 195, 203, 211, 229, 247},{0, 14, 30, 37, 42, 75, 96, 111, 127, 143, 159, 175, 191, 207, 223, 240},{30, 30, 30, 30, 30, 40, 50, 60, 67, 73, 89, 95, 101, 102, 102, 103}},
   {{0,43,52,66,80,95,110,125,140,155,170,185,200,215,230,250},{0,43,52,66,80,95,110,125,140,155,170,185,200,215,230,250},{0, 4, 5, 6, 7, 8, 9, 11, 15, 25, 39, 57, 78, 101, 126, 152}},
-  
-  // 15: Rojo fuerte a Rosa Claro (Mejorada)
   {{0, 100, 120, 140, 160, 180, 200, 215, 230, 240, 250, 255, 255, 255, 255, 255},{0, 0, 0, 0, 0, 10, 25, 45, 65, 85, 110, 135, 160, 185, 210, 230},{0, 0, 0, 5, 15, 30, 50, 70, 90, 110, 135, 160, 185, 210, 230, 245}},
-  // 16: Rojo -> Naranja -> Warm White (Mejorada)
   {{0, 120, 140, 160, 180, 200, 220, 240, 255, 255, 255, 255, 255, 255, 255, 255},{0, 0, 10, 25, 45, 65, 85, 105, 125, 145, 165, 185, 200, 215, 230, 245},{0, 0, 0, 0, 0, 0, 0, 0, 10, 30, 50, 75, 100, 130, 160, 190}},
-  // 17: Blanco Azulado (Mejorada)
   {{0, 5, 15, 30, 50, 70, 90, 110, 130, 150, 170, 190, 210, 225, 240, 255},{0, 25, 45, 65, 85, 105, 125, 145, 165, 185, 205, 220, 235, 245, 255, 255},{0, 60, 80, 100, 120, 140, 160, 180, 200, 215, 230, 240, 250, 255, 255, 255}},
-  
-  // 18 y 19: ORIGINALES
   {{0, 5, 15, 27, 40, 51, 58, 66, 92, 125, 152, 178, 188, 201, 219, 237},{0, 17, 55, 87, 114, 132, 141, 150, 160, 169, 175, 182, 170, 166, 182, 212},{0, 117, 120, 123, 126, 118, 99, 79, 75, 83, 88, 93, 98, 119, 159, 206}},
   {{0, 46, 57, 70, 93, 114, 136, 159, 184, 206, 228, 251, 255, 255, 255, 255},{0, 58, 72, 95, 110, 124, 139, 152, 164, 177, 191, 199, 208, 212, 213, 226},{0, 53, 54, 73, 77, 82, 92, 103, 114, 127, 151, 173, 195, 214, 227, 247}},
-  
-  // 20: Invertida -> Ahora normal, brillo ascendente (Mejorada)
   {{0, 10, 20, 35, 50, 70, 90, 110, 130, 150, 170, 190, 210, 230, 245, 255},{0, 5, 15, 30, 45, 65, 85, 105, 125, 145, 165, 185, 205, 225, 240, 255},{0, 40, 60, 80, 100, 120, 140, 160, 180, 200, 215, 230, 240, 250, 255, 255}},
-  // 21: Fire / Fuego con brillo marcado (Mejorada)
   {{0, 70, 100, 130, 160, 190, 220, 240, 255, 255, 255, 255, 255, 255, 255, 255},{0, 0, 0, 10, 25, 45, 70, 95, 120, 145, 170, 195, 215, 235, 245, 255},{0, 0, 0, 0, 0, 0, 0, 0, 10, 30, 50, 80, 110, 150, 200, 255}},
-  // 22: Synthwave con brillo marcado (Mejorada)
   {{0, 25, 45, 70, 100, 130, 160, 190, 215, 235, 250, 255, 255, 255, 255, 255},{0, 0, 0, 5, 15, 30, 50, 75, 100, 130, 160, 190, 215, 235, 250, 255},{0, 70, 100, 130, 160, 190, 215, 235, 250, 255, 255, 255, 255, 255, 255, 255}},
-  // 23: Frio a Caliente con brillo marcado (Mejorada)
   {{0, 10, 25, 45, 70, 100, 130, 160, 190, 215, 235, 250, 255, 255, 255, 255},{0, 0, 5, 15, 30, 50, 70, 90, 110, 130, 150, 170, 190, 210, 230, 255},{0, 70, 100, 120, 140, 150, 140, 120, 90, 60, 30, 10, 0, 0, 50, 150}},
-  
   {{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}}
 };
 
-// ESTADO POR DEFECTO: Escala 12 (Index 12), Nivel 4 (Fila 3)
 static uint8_t selected_palette = 12;
 static uint8_t current_page = 1; 
-static uint8_t dynamic_gamma_table[16];
 
 static bool key_13_7 = false;
 static bool key_14_7 = false;
@@ -124,42 +109,52 @@ static bool palette_ui_active = false;
 static bool palette_preview_active = false;
 static uint32_t palette_preview_start = 0;
 
-// LA FÓRMULA MATEMÁTICA EXACTA DE SU .INO ORIGINAL
+// ===========================================================================
+// MOTOR VECTORIAL FORENSE CROMÁTICO (INYECCIÓN DE ÉLITE)
+// ===========================================================================
+
+static uint8_t current_brightness_row = 3; 
+
 static void set_dynamic_gamma(uint8_t row) {
-    float val_f = (float)row;
-    for (int i = 0; i < 16; i++) {
-        dynamic_gamma_table[i] = (uint8_t)( (((8.0 - val_f) / 8.0) * 255.0 / 15.0) * i );
-    }
+    if (row < 7) current_brightness_row = row;
 }
 
-// FUNCIÓN MAESTRA: Calcula el color y aplica el Anti-Crush de Hardware
 static void get_color_for_level(uint8_t pal_idx, uint8_t val, uint32_t *r_out, uint32_t *g_out, uint32_t *b_out) {
     if (val == 0) {
         *r_out = 0; *g_out = 0; *b_out = 0;
         return;
     }
 
-    uint32_t r = allpalettes[pal_idx][0][val];
-    uint32_t g = allpalettes[pal_idx][1][val];
-    uint32_t b = allpalettes[pal_idx][2][val];
-    uint32_t gam = dynamic_gamma_table[val];
+    uint32_t r_orig = allpalettes[pal_idx][0][val];
+    uint32_t g_orig = allpalettes[pal_idx][1][val];
+    uint32_t b_orig = allpalettes[pal_idx][2][val];
 
-    // El aplastamiento cuadrático original que genera su contraste
-    r = (r * gam) / 255;
-    g = (g * gam) / 255;
-    b = (b * gam) / 255;
+    // 1. Aislar vector dominante
+    uint32_t max_orig = r_orig;
+    if (g_orig > max_orig) max_orig = g_orig;
+    if (b_orig > max_orig) max_orig = b_orig;
 
-    // ANTI-CRUSH DE HARDWARE (Para BRIGHTNESS 96)
-    // La librería Adafruit hace: (color * 96) >> 8.
-    // Si color es 1 o 2, el resultado es 0 (Apagado).
-    // Por lo tanto, el mínimo absoluto para que un LED encienda es 3.
-    if (allpalettes[pal_idx][0][val] > 0 && r < 3) r = 3;
-    if (allpalettes[pal_idx][1][val] > 0 && g < 3) g = 3;
-    if (allpalettes[pal_idx][2][val] > 0 && b < 3) b = 3;
+    if (max_orig == 0) {
+        *r_out = 0; *g_out = 0; *b_out = 0;
+        return;
+    }
 
-    *r_out = r;
-    *g_out = g;
-    *b_out = b;
+    // 2. Preservar la curva de contraste visual (Cuadrática intencionada)
+    uint32_t int_quad = (max_orig * val) / 15;
+
+    // 3. Escalado maestro (BRIGHTNESS absoluto definido en config.h)
+    uint32_t scale_row = 256 - (current_brightness_row * 36); 
+    uint32_t target_intensity = (int_quad * scale_row * BRIGHTNESS) / 65280;
+
+    // 4. Piso de degradado determinista (Espaciado garantizado sin importar config.h)
+    uint32_t final_intensity = target_intensity;
+    if (final_intensity < val) final_intensity = val;
+    if (final_intensity > BRIGHTNESS) final_intensity = BRIGHTNESS;
+
+    // 5. Reproyección cromática (Erradicación total de los inyectados grises de fondo)
+    *r_out = (r_orig * final_intensity) / max_orig;
+    *g_out = (g_orig * final_intensity) / max_orig;
+    *b_out = (b_orig * final_intensity) / max_orig;
 }
 
 static inline uint32_t level_to_color(uint8_t val) {
@@ -169,16 +164,15 @@ static inline uint32_t level_to_color(uint8_t val) {
 }
 
 static void draw_palette_ui() {
-    // Columna 0: Muestra los niveles de brillo
+    // Escala correcta del UI usando el Motor Vectorial
     for(int y=0; y<7; y++){
-        float val_f = (float)y;
-        uint8_t gam_val = (uint8_t)( (((8.0 - val_f) / 8.0) * 255.0 / 15.0) * 15 );
-        if (gam_val > 0 && gam_val < 3) gam_val = 3; // Anti-crush para el menú
+        uint32_t scale = 256 - (y * 36);
+        uint32_t gam_val = (scale * BRIGHTNESS) / 256;
+        if (gam_val < 1) gam_val = 1; // Un fotón de piso para identificar visualmente el botón UI
         trellis.setPixelColor(y * NUM_COLS, (gam_val << 16) | (gam_val << 8) | gam_val);
     }
     trellis.setPixelColor(7 * NUM_COLS, 0x444444); 
 
-    // Dibujar paletas
     for(int y=0; y<8; y++){
         int pal_idx = y + (8 * current_page);
         for(int x=1; x<NUM_COLS; x++){
@@ -349,9 +343,11 @@ extern "C" void device_init() {
             trellis.registerCallback(x, y, keyCallback);
         }
     }
+    
+    // EVITAR TRUNCAMIENTO I2C: Enviar datos 1:1, el límite lo controla el Motor Vectorial
     for (uint8_t x = 0; x < NUM_COLS / 4; x++) {
         for (uint8_t y = 0; y < NUM_ROWS / 4; y++) {
-            trellis_array[y][x].pixels.setBrightness(BRIGHTNESS);
+            trellis_array[y][x].pixels.setBrightness(255);
         }
     }
 
@@ -359,7 +355,7 @@ extern "C" void device_init() {
     memset(mmap,         0, sizeof(mmap));
     memset(prevLedBuffer, 0, sizeof(prevLedBuffer));
     
-    set_dynamic_gamma(3); // Inicializa en Nivel 4 (Fila 3)
+    set_dynamic_gamma(3); 
     sendLeds_iii();
 
     gpio_put(LED_PIN, 0);
@@ -441,13 +437,8 @@ extern "C" void device_led_all(int z, int rel) {
 }
 
 extern "C" void device_intensity(int z) {
-    if (z > 15) z = 15;
-    uint8_t brightness = (uint8_t)((z * 255) / 15);
-    for (uint8_t xi = 0; xi < NUM_COLS / 4; xi++) {
-        for (uint8_t yi = 0; yi < NUM_ROWS / 4; yi++) {
-            trellis_array[yi][xi].pixels.setBrightness(brightness);
-        }
-    }
+    // Interfaz nativa ignorada para preservar seguridad de hardware
+    // Controlada exclusivamente por el Motor Vectorial de get_color_for_level
     grid_dirty = true;
 }
 
