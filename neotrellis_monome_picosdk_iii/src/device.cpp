@@ -1,5 +1,6 @@
 /*
- * device.cpp - NeoTrellis device implementation for iii (PALETTED EDITION V3 - EXACT MATH)
+ * device.cpp - NeoTrellis device implementation for iii (PALETTED EDITION V4 - ULTIMATE)
+ * FORENSICALLY CORRECTED ENGINE WITH HARDWARE ANTI-CRUSH
  */
 
 #include "MonomeSerialDevice.h"
@@ -67,10 +68,11 @@ static void grid_add_event(uint8_t x, uint8_t y, uint8_t z) {
 }
 
 // ===========================================================================
-// INYECCIÓN FORENSE: MATEMÁTICA EXACTA DEL TEENSY Y NUEVAS PALETAS
+// INYECCIÓN FORENSE: MATRIZ EXACTA + PALETAS MEJORADAS
 // ===========================================================================
 
 static const uint8_t allpalettes[25][3][16] = {
+  // 0 a 14: EXACTAMENTE IGUALES A SU .INO ORIGINAL
   {{0,45,55,65,75,85,96,107,118,133,152,171,190,210,230,250},{0,45,55,65,75,85,96,107,118,133,152,171,190,210,230,250},{0,45,55,65,75,85,96,107,118,133,152,171,190,210,230,250}},
   {{0,43,52,66,80,95,110,125,140,155,170,185,200,215,230,250},{0,43,52,66,80,95,110,125,140,155,170,185,200,215,230,250},{0,22,31,33,40,48,55,62,70,77,85,92,100,107,115,125}},
   {{0,22,31,33,40,48,55,62,70,77,85,92,100,107,115,125},{0,43,52,66,80,95,110,125,140,155,170,185,200,215,230,250},{0,43,52,66,80,95,110,125,140,155,170,185,200,215,230,250}},
@@ -83,26 +85,30 @@ static const uint8_t allpalettes[25][3][16] = {
   {{0, 10 ,11, 12, 13, 14, 15, 16, 20, 25, 35, 45, 55, 65, 75, 88},{100, 115, 133, 150, 159, 167, 175, 180, 185, 189, 197, 205, 213, 220, 230, 240},{102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102}},
   {{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},{0, 14, 30, 47, 62, 79, 96, 111, 127, 143, 159, 175, 191, 207, 223, 240},{255, 247, 239, 231, 223, 215, 207, 199, 190, 183, 175, 167, 159, 150, 143, 135}},
   {{0, 14, 30, 47, 62, 79, 96, 111, 127, 143, 159, 175, 191, 207, 223, 240},{127, 135, 143, 150, 159, 167, 175, 183, 191, 199, 207, 215, 223, 231, 239, 247},{102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102}},
-  // ESCALA 12 (Index 12) - LA ORIGINAL INTACTA
   {{0, 14, 30, 47, 62, 79, 96, 111, 127, 143, 159, 175, 191, 207, 223, 240},{127, 135, 143, 150, 159, 167, 175, 183, 191, 199, 207, 215, 223, 231, 239, 247},{0, 14, 30, 37, 42, 59, 66, 71, 87, 93, 109, 115, 121, 127, 127, 127}},
   {{107, 115, 123, 130, 139, 147, 155, 163, 171, 179, 187, 195, 203, 211, 229, 247},{0, 14, 30, 37, 42, 75, 96, 111, 127, 143, 159, 175, 191, 207, 223, 240},{30, 30, 30, 30, 30, 40, 50, 60, 67, 73, 89, 95, 101, 102, 102, 103}},
   {{0,43,52,66,80,95,110,125,140,155,170,185,200,215,230,250},{0,43,52,66,80,95,110,125,140,155,170,185,200,215,230,250},{0, 4, 5, 6, 7, 8, 9, 11, 15, 25, 39, 57, 78, 101, 126, 152}},
-  // ESCALA 15 (Index 15) - Rojo fuerte a Rosa Claro
+  
+  // 15: Rojo fuerte a Rosa Claro (Mejorada)
   {{0, 100, 120, 140, 160, 180, 200, 215, 230, 240, 250, 255, 255, 255, 255, 255},{0, 0, 0, 0, 0, 10, 25, 45, 65, 85, 110, 135, 160, 185, 210, 230},{0, 0, 0, 5, 15, 30, 50, 70, 90, 110, 135, 160, 185, 210, 230, 245}},
-  // ESCALA 16 (Index 16) - Rojo -> Naranja -> Warm White
+  // 16: Rojo -> Naranja -> Warm White (Mejorada)
   {{0, 120, 140, 160, 180, 200, 220, 240, 255, 255, 255, 255, 255, 255, 255, 255},{0, 0, 10, 25, 45, 65, 85, 105, 125, 145, 165, 185, 200, 215, 230, 245},{0, 0, 0, 0, 0, 0, 0, 0, 10, 30, 50, 75, 100, 130, 160, 190}},
-  // ESCALA 17 (Index 17) - Blanco Azulado
-  {{0, 0, 0, 5, 15, 30, 50, 70, 90, 110, 130, 150, 170, 190, 210, 230},{0, 10, 25, 45, 65, 85, 105, 125, 145, 165, 185, 205, 220, 235, 245, 255},{0, 40, 60, 80, 100, 120, 140, 160, 180, 200, 215, 230, 240, 250, 255, 255}},
+  // 17: Blanco Azulado (Mejorada)
+  {{0, 5, 15, 30, 50, 70, 90, 110, 130, 150, 170, 190, 210, 225, 240, 255},{0, 25, 45, 65, 85, 105, 125, 145, 165, 185, 205, 220, 235, 245, 255, 255},{0, 60, 80, 100, 120, 140, 160, 180, 200, 215, 230, 240, 250, 255, 255, 255}},
+  
+  // 18 y 19: ORIGINALES
   {{0, 5, 15, 27, 40, 51, 58, 66, 92, 125, 152, 178, 188, 201, 219, 237},{0, 17, 55, 87, 114, 132, 141, 150, 160, 169, 175, 182, 170, 166, 182, 212},{0, 117, 120, 123, 126, 118, 99, 79, 75, 83, 88, 93, 98, 119, 159, 206}},
   {{0, 46, 57, 70, 93, 114, 136, 159, 184, 206, 228, 251, 255, 255, 255, 255},{0, 58, 72, 95, 110, 124, 139, 152, 164, 177, 191, 199, 208, 212, 213, 226},{0, 53, 54, 73, 77, 82, 92, 103, 114, 127, 151, 173, 195, 214, 227, 247}},
-  // ESCALA 20 (Index 20) - Invertida (Dark Purple -> Bright Cyan)
-  {{0, 30, 40, 50, 60, 65, 70, 75, 80, 85, 90, 100, 120, 150, 180, 220},{0, 0, 10, 25, 45, 70, 95, 120, 145, 170, 195, 215, 230, 240, 250, 255},{0, 50, 70, 90, 110, 130, 150, 170, 190, 210, 225, 235, 245, 250, 255, 255}},
-  // ESCALA 21 (Index 21) - Fire (Black -> Red -> Yellow -> White)
-  {{0, 80, 110, 140, 170, 200, 230, 255, 255, 255, 255, 255, 255, 255, 255, 255},{0, 0, 0, 0, 10, 30, 60, 90, 120, 150, 180, 200, 220, 235, 245, 255},{0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 30, 60, 100, 150, 200, 255}},
-  // ESCALA 22 (Index 22) - Synthwave (Dark Blue -> Magenta -> Cyan -> White)
-  {{0, 10, 20, 40, 70, 110, 150, 190, 220, 240, 250, 230, 200, 180, 220, 255},{0, 0, 0, 0, 0, 10, 30, 60, 90, 130, 180, 220, 240, 250, 255, 255},{0, 60, 90, 120, 150, 180, 200, 220, 230, 240, 250, 255, 255, 255, 255, 255}},
-  // ESCALA 23 (Index 23) - Frio a Caliente (Blue -> Purple -> Red -> Orange -> Yellow)
-  {{0, 10, 30, 60, 100, 140, 180, 220, 250, 255, 255, 255, 255, 255, 255, 255},{0, 0, 0, 0, 10, 20, 30, 45, 65, 90, 120, 150, 180, 210, 235, 255},{0, 80, 120, 150, 170, 180, 170, 140, 100, 60, 30, 10, 0, 0, 50, 150}},
+  
+  // 20: Invertida -> Ahora normal, brillo ascendente (Mejorada)
+  {{0, 10, 20, 35, 50, 70, 90, 110, 130, 150, 170, 190, 210, 230, 245, 255},{0, 5, 15, 30, 45, 65, 85, 105, 125, 145, 165, 185, 205, 225, 240, 255},{0, 40, 60, 80, 100, 120, 140, 160, 180, 200, 215, 230, 240, 250, 255, 255}},
+  // 21: Fire / Fuego con brillo marcado (Mejorada)
+  {{0, 70, 100, 130, 160, 190, 220, 240, 255, 255, 255, 255, 255, 255, 255, 255},{0, 0, 0, 10, 25, 45, 70, 95, 120, 145, 170, 195, 215, 235, 245, 255},{0, 0, 0, 0, 0, 0, 0, 0, 10, 30, 50, 80, 110, 150, 200, 255}},
+  // 22: Synthwave con brillo marcado (Mejorada)
+  {{0, 25, 45, 70, 100, 130, 160, 190, 215, 235, 250, 255, 255, 255, 255, 255},{0, 0, 0, 5, 15, 30, 50, 75, 100, 130, 160, 190, 215, 235, 250, 255},{0, 70, 100, 130, 160, 190, 215, 235, 250, 255, 255, 255, 255, 255, 255, 255}},
+  // 23: Frio a Caliente con brillo marcado (Mejorada)
+  {{0, 10, 25, 45, 70, 100, 130, 160, 190, 215, 235, 250, 255, 255, 255, 255},{0, 0, 5, 15, 30, 50, 70, 90, 110, 130, 150, 170, 190, 210, 230, 255},{0, 70, 100, 120, 140, 150, 140, 120, 90, 60, 30, 10, 0, 0, 50, 150}},
+  
   {{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}}
 };
 
@@ -119,20 +125,23 @@ static bool palette_preview_active = false;
 static uint32_t palette_preview_start = 0;
 
 // LA FÓRMULA MATEMÁTICA EXACTA DE SU .INO ORIGINAL
-static void set_dynamic_gamma(uint8_t value) {
-    float val_f = (float)value;
+static void set_dynamic_gamma(uint8_t row) {
+    float val_f = (float)row;
     for (int i = 0; i < 16; i++) {
         dynamic_gamma_table[i] = (uint8_t)( (((8.0 - val_f) / 8.0) * 255.0 / 15.0) * i );
     }
 }
 
-static inline uint32_t level_to_color(uint8_t val) {
-    if (val == 0) return 0; 
-    
-    uint32_t r = allpalettes[selected_palette][0][val];
-    uint32_t g = allpalettes[selected_palette][1][val];
-    uint32_t b = allpalettes[selected_palette][2][val];
-    
+// FUNCIÓN MAESTRA: Calcula el color y aplica el Anti-Crush de Hardware
+static void get_color_for_level(uint8_t pal_idx, uint8_t val, uint32_t *r_out, uint32_t *g_out, uint32_t *b_out) {
+    if (val == 0) {
+        *r_out = 0; *g_out = 0; *b_out = 0;
+        return;
+    }
+
+    uint32_t r = allpalettes[pal_idx][0][val];
+    uint32_t g = allpalettes[pal_idx][1][val];
+    uint32_t b = allpalettes[pal_idx][2][val];
     uint32_t gam = dynamic_gamma_table[val];
 
     // El aplastamiento cuadrático original que genera su contraste
@@ -140,50 +149,42 @@ static inline uint32_t level_to_color(uint8_t val) {
     g = (g * gam) / 255;
     b = (b * gam) / 255;
 
-    // Límite de brillo maestro por software (Equivalente a su antiguo BRIGHTNESS 128)
-    // Esto asume que en config.h pusieron BRIGHTNESS 255
-    r = (r * 128) / 255;
-    g = (g * 128) / 255;
-    b = (b * 128) / 255;
+    // ANTI-CRUSH DE HARDWARE (Para BRIGHTNESS 96)
+    // La librería Adafruit hace: (color * 96) >> 8.
+    // Si color es 1 o 2, el resultado es 0 (Apagado).
+    // Por lo tanto, el mínimo absoluto para que un LED encienda es 3.
+    if (allpalettes[pal_idx][0][val] > 0 && r < 3) r = 3;
+    if (allpalettes[pal_idx][1][val] > 0 && g < 3) g = 3;
+    if (allpalettes[pal_idx][2][val] > 0 && b < 3) b = 3;
 
-    // Anti-Crush: Si la paleta tenía color, asegura que el LED no se apague por completo
-    if (allpalettes[selected_palette][0][val] > 0 && r == 0) r = 1;
-    if (allpalettes[selected_palette][1][val] > 0 && g == 0) g = 1;
-    if (allpalettes[selected_palette][2][val] > 0 && b == 0) b = 1;
+    *r_out = r;
+    *g_out = g;
+    *b_out = b;
+}
 
+static inline uint32_t level_to_color(uint8_t val) {
+    uint32_t r, g, b;
+    get_color_for_level(selected_palette, val, &r, &g, &b);
     return (r << 16) | (g << 8) | b;
 }
 
 static void draw_palette_ui() {
+    // Columna 0: Muestra los niveles de brillo
     for(int y=0; y<7; y++){
         float val_f = (float)y;
         uint8_t gam_val = (uint8_t)( (((8.0 - val_f) / 8.0) * 255.0 / 15.0) * 15 );
+        if (gam_val > 0 && gam_val < 3) gam_val = 3; // Anti-crush para el menú
         trellis.setPixelColor(y * NUM_COLS, (gam_val << 16) | (gam_val << 8) | gam_val);
     }
     trellis.setPixelColor(7 * NUM_COLS, 0x444444); 
 
+    // Dibujar paletas
     for(int y=0; y<8; y++){
         int pal_idx = y + (8 * current_page);
         for(int x=1; x<NUM_COLS; x++){
             if (pal_idx < 25) {
-                uint8_t val = x; 
-                uint32_t r = allpalettes[pal_idx][0][val];
-                uint32_t g = allpalettes[pal_idx][1][val];
-                uint32_t b = allpalettes[pal_idx][2][val];
-                uint32_t gam = dynamic_gamma_table[val];
-                
-                r = (r * gam) / 255;
-                g = (g * gam) / 255;
-                b = (b * gam) / 255;
-                
-                r = (r * 128) / 255;
-                g = (g * 128) / 255;
-                b = (b * 128) / 255;
-                
-                if (allpalettes[pal_idx][0][val] > 0 && r == 0) r = 1;
-                if (allpalettes[pal_idx][1][val] > 0 && g == 0) g = 1;
-                if (allpalettes[pal_idx][2][val] > 0 && b == 0) b = 1;
-
+                uint32_t r, g, b;
+                get_color_for_level(pal_idx, x, &r, &g, &b);
                 trellis.setPixelColor(y * NUM_COLS + x, (r << 16) | (g << 8) | b);
             } else {
                 trellis.setPixelColor(y * NUM_COLS + x, 0);
@@ -265,24 +266,9 @@ static TrellisCallback keyCallback(keyEvent evt) {
                     for(int i=0; i<NUM_ROWS; i++){
                         for(int j=0; j<NUM_COLS; j++){
                             uint8_t val = j % 16;
-                            if (val == 0) {
-                                trellis.setPixelColor(i * NUM_COLS + j, 0);
-                            } else {
-                                uint32_t r = allpalettes[selected_palette][0][val];
-                                uint32_t g = allpalettes[selected_palette][1][val];
-                                uint32_t b = allpalettes[selected_palette][2][val];
-                                uint32_t gam = dynamic_gamma_table[val];
-                                r = (r * gam) / 255;
-                                g = (g * gam) / 255;
-                                b = (b * gam) / 255;
-                                r = (r * 128) / 255;
-                                g = (g * 128) / 255;
-                                b = (b * 128) / 255;
-                                if (allpalettes[selected_palette][0][val] > 0 && r == 0) r = 1;
-                                if (allpalettes[selected_palette][1][val] > 0 && g == 0) g = 1;
-                                if (allpalettes[selected_palette][2][val] > 0 && b == 0) b = 1;
-                                trellis.setPixelColor(i * NUM_COLS + j, (r << 16) | (g << 8) | b);
-                            }
+                            uint32_t r, g, b;
+                            get_color_for_level(selected_palette, val, &r, &g, &b);
+                            trellis.setPixelColor(i * NUM_COLS + j, (r << 16) | (g << 8) | b);
                         }
                     }
                     trellis.show();
