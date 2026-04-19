@@ -1,6 +1,6 @@
 /*
  * device.cpp - NeoTrellis device implementation for iii (PALETTED EDITION V4 - ULTIMATE)
- * FORENSICALLY CORRECTED ENGINE WITH VECTORIAL ANTI-CRUSH
+ * FORENSICALLY CORRECTED ENGINE V2: FLOAT PRECISION + DYNAMIC FLOOR
  */
 
 #include "MonomeSerialDevice.h"
@@ -110,7 +110,7 @@ static bool palette_preview_active = false;
 static uint32_t palette_preview_start = 0;
 
 // ===========================================================================
-// MOTOR VECTORIAL FORENSE CROMÁTICO (INYECCIÓN DE ÉLITE)
+// MOTOR VECTORIAL FORENSE V2 (PRECISIÓN FLOTANTE + ESPACIADO GARANTIZADO)
 // ===========================================================================
 
 static uint8_t current_brightness_row = 3; 
@@ -129,7 +129,6 @@ static void get_color_for_level(uint8_t pal_idx, uint8_t val, uint32_t *r_out, u
     uint32_t g_orig = allpalettes[pal_idx][1][val];
     uint32_t b_orig = allpalettes[pal_idx][2][val];
 
-    // 1. Aislar vector dominante
     uint32_t max_orig = r_orig;
     if (g_orig > max_orig) max_orig = g_orig;
     if (b_orig > max_orig) max_orig = b_orig;
@@ -139,19 +138,36 @@ static void get_color_for_level(uint8_t pal_idx, uint8_t val, uint32_t *r_out, u
         return;
     }
 
-    // 2. Preservar la curva de contraste visual (Cuadrática intencionada)
-    uint32_t int_quad = (max_orig * val) / 15;
+    // 1. Simulación Cuadrática Exacta (Mantiene la curva fluida exigida)
+    // Procesado en float para erradicar la pérdida de precisión en umbrales bajos
+    float luma = (float)max_orig / 255.0f;
+    float quad = (float)val / 15.0f;
+    
+    // 2. Escalado general del UI
+    float row_scale = (8.0f - (float)current_brightness_row) / 8.0f;
+    
+    // El target puro con el techo impuesto en config.h
+    float target = luma * quad * row_scale * (float)BRIGHTNESS;
 
-    // 3. Escalado maestro (BRIGHTNESS absoluto definido en config.h)
-    uint32_t scale_row = 256 - (current_brightness_row * 36); 
-    uint32_t target_intensity = (int_quad * scale_row * BRIGHTNESS) / 65280;
+    // 3. SUELO DINÁMICO ESPACIADO (Erradicación del colapso a negro)
+    // Física del NeoPixel: valores por debajo de 3 a menudo no emiten fotones.
+    // 3.5 asegura un mínimo matemático redondo de 4 o 5 (visible).
+    // val * 1.2 impone el espaciado continuo para cada paso, inquebrantable
+    // incluso bajo la reducción de escala del UI.
+    float floor_val = 3.5f + ((float)val * 1.2f);
 
-    // 4. Piso de degradado determinista (Espaciado garantizado sin importar config.h)
-    uint32_t final_intensity = target_intensity;
-    if (final_intensity < val) final_intensity = val;
-    if (final_intensity > BRIGHTNESS) final_intensity = BRIGHTNESS;
+    if (target < floor_val) {
+        target = floor_val;
+    }
 
-    // 5. Reproyección cromática (Erradicación total de los inyectados grises de fondo)
+    if (target > (float)BRIGHTNESS) {
+        target = (float)BRIGHTNESS;
+    }
+
+    // Redondeo matemático perfecto en lugar de truncamiento destructivo
+    uint32_t final_intensity = (uint32_t)(target + 0.5f);
+
+    // 4. Reproyección de Croma Absoluta
     *r_out = (r_orig * final_intensity) / max_orig;
     *g_out = (g_orig * final_intensity) / max_orig;
     *b_out = (b_orig * final_intensity) / max_orig;
@@ -164,11 +180,10 @@ static inline uint32_t level_to_color(uint8_t val) {
 }
 
 static void draw_palette_ui() {
-    // Escala correcta del UI usando el Motor Vectorial
     for(int y=0; y<7; y++){
-        uint32_t scale = 256 - (y * 36);
-        uint32_t gam_val = (scale * BRIGHTNESS) / 256;
-        if (gam_val < 1) gam_val = 1; // Un fotón de piso para identificar visualmente el botón UI
+        float row_scale = (8.0f - (float)y) / 8.0f;
+        uint32_t gam_val = (uint32_t)(row_scale * (float)BRIGHTNESS + 0.5f);
+        if (gam_val < 5) gam_val = 5; // Suelo visual garantizado para la interfaz
         trellis.setPixelColor(y * NUM_COLS, (gam_val << 16) | (gam_val << 8) | gam_val);
     }
     trellis.setPixelColor(7 * NUM_COLS, 0x444444); 
@@ -344,7 +359,7 @@ extern "C" void device_init() {
         }
     }
     
-    // EVITAR TRUNCAMIENTO I2C: Enviar datos 1:1, el límite lo controla el Motor Vectorial
+    // Truncamiento HW anulado; delegamos 100% control a la precisión flotante SW
     for (uint8_t x = 0; x < NUM_COLS / 4; x++) {
         for (uint8_t y = 0; y < NUM_ROWS / 4; y++) {
             trellis_array[y][x].pixels.setBrightness(255);
@@ -437,8 +452,6 @@ extern "C" void device_led_all(int z, int rel) {
 }
 
 extern "C" void device_intensity(int z) {
-    // Interfaz nativa ignorada para preservar seguridad de hardware
-    // Controlada exclusivamente por el Motor Vectorial de get_color_for_level
     grid_dirty = true;
 }
 
