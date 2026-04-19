@@ -138,23 +138,21 @@ static void get_color_for_level(uint8_t pal_idx, uint8_t val, uint32_t *r_out, u
         return;
     }
 
-    // 1. Simulación Cuadrática Exacta (Mantiene la curva fluida exigida)
-    // Procesado en float para erradicar la pérdida de precisión en umbrales bajos
+    // 1. Simulación Cuadrática Exacta
     float luma = (float)max_orig / 255.0f;
     float quad = (float)val / 15.0f;
     
     // 2. Escalado general del UI
     float row_scale = (8.0f - (float)current_brightness_row) / 8.0f;
-    
-    // El target puro con el techo impuesto en config.h
     float target = luma * quad * row_scale * (float)BRIGHTNESS;
 
-    // 3. SUELO DINÁMICO ESPACIADO (Erradicación del colapso a negro)
-    // Física del NeoPixel: valores por debajo de 3 a menudo no emiten fotones.
-    // 3.5 asegura un mínimo matemático redondo de 4 o 5 (visible).
-    // val * 1.2 impone el espaciado continuo para cada paso, inquebrantable
-    // incluso bajo la reducción de escala del UI.
-    float floor_val = 3.5f + ((float)val * 1.2f);
+    // 3. EL "SWEET SPOT" (Suelo Dinámico Milimétrico)
+    // Genera una rampa matemática inquebrantable para los rangos más bajos:
+    // val=1 -> 1.0 (Mínimo hardware absoluto, tenue pero visible)
+    // val=2 -> 1.75 (Redondea a 2, 100% de contraste visual respecto a 1)
+    // val=3 -> 2.50 (Redondea a 3, 50% de contraste visual respecto a 2)
+    // Erradica el brillo excesivo anterior forzando pasos enteros puros.
+    float floor_val = ((float)val * 0.75f) + 0.25f;
 
     if (target < floor_val) {
         target = floor_val;
@@ -164,7 +162,6 @@ static void get_color_for_level(uint8_t pal_idx, uint8_t val, uint32_t *r_out, u
         target = (float)BRIGHTNESS;
     }
 
-    // Redondeo matemático perfecto en lugar de truncamiento destructivo
     uint32_t final_intensity = (uint32_t)(target + 0.5f);
 
     // 4. Reproyección de Croma Absoluta
@@ -173,17 +170,11 @@ static void get_color_for_level(uint8_t pal_idx, uint8_t val, uint32_t *r_out, u
     *b_out = (b_orig * final_intensity) / max_orig;
 }
 
-static inline uint32_t level_to_color(uint8_t val) {
-    uint32_t r, g, b;
-    get_color_for_level(selected_palette, val, &r, &g, &b);
-    return (r << 16) | (g << 8) | b;
-}
-
 static void draw_palette_ui() {
     for(int y=0; y<7; y++){
         float row_scale = (8.0f - (float)y) / 8.0f;
         uint32_t gam_val = (uint32_t)(row_scale * (float)BRIGHTNESS + 0.5f);
-        if (gam_val < 5) gam_val = 5; // Suelo visual garantizado para la interfaz
+        if (gam_val < 2) gam_val = 2; // Ajustado al nuevo sweet spot de hardware
         trellis.setPixelColor(y * NUM_COLS, (gam_val << 16) | (gam_val << 8) | gam_val);
     }
     trellis.setPixelColor(7 * NUM_COLS, 0x444444); 
