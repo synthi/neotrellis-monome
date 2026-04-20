@@ -99,7 +99,7 @@ static const uint8_t allpalettes[25][3][16] = {
   {{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}}
 };
 
-static uint8_t selected_palette = 12;
+static uint8_t selected_palette = 11; // CORRECCIÓN: Índice 11 corresponde a la Paleta 12.
 static uint8_t current_page = 1; 
 
 static bool key_13_7 = false;
@@ -109,11 +109,11 @@ static bool palette_ui_active = false;
 static bool palette_preview_active = false;
 static uint32_t palette_preview_start = 0;
 
-/// ===========================================================================
-// MOTOR VECTORIAL FORENSE V4 (EQUILIBRIO TERMODINÁMICO DE DIFUSIÓN)
+// ===========================================================================
+// MOTOR VECTORIAL FORENSE V6 (ANTI-TRUNCAMIENTO CROMÁTICO)
 // ===========================================================================
 
-static uint8_t current_brightness_row = 3; 
+static uint8_t current_brightness_row = 2; // CORRECCIÓN: Fila 3 es el índice 2
 
 static void set_dynamic_gamma(uint8_t row) {
     if (row < 7) current_brightness_row = row;
@@ -138,7 +138,7 @@ static void get_color_for_level(uint8_t pal_idx, uint8_t val, uint32_t *r_out, u
         return;
     }
 
-    // 1. Simulación Cuadrática Exacta 
+    // 1. Simulación Cuadrática 
     float luma = (float)max_orig / 255.0f;
     float quad = (float)val / 15.0f;
     
@@ -146,11 +146,10 @@ static void get_color_for_level(uint8_t pal_idx, uint8_t val, uint32_t *r_out, u
     float row_scale = (8.0f - (float)current_brightness_row) / 8.0f;
     float target = luma * quad * row_scale * (float)BRIGHTNESS;
 
-    // 3. EQUILIBRIO PERFECTO (Suelo Dinámico V4)
-    // val=1 -> 2.7 (Redondea a 3, penetra la silicona sin deslumbrar)
-    // val=2 -> 3.9 (Redondea a 4, contraste del 33% visible)
-    // val=3 -> 5.1 (Redondea a 5)
-    float floor_val = ((float)val * 1.2f) + 1.5f;
+    // 3. SUELO ANTI-QUANTIZACIÓN
+    // Ajustado para asegurar que los canales desaturados alcancen simetría 
+    // y no colapsen en tintes falsos a niveles extremadamente bajos de hardware.
+    float floor_val = ((float)val * 1.1f) + 0.9f;
 
     if (target < floor_val) {
         target = floor_val;
@@ -160,12 +159,12 @@ static void get_color_for_level(uint8_t pal_idx, uint8_t val, uint32_t *r_out, u
         target = (float)BRIGHTNESS;
     }
 
-    uint32_t final_intensity = (uint32_t)(target + 0.5f);
-
-    // 4. Reproyección de Croma Absoluta
-    *r_out = (r_orig * final_intensity) / max_orig;
-    *g_out = (g_orig * final_intensity) / max_orig;
-    *b_out = (b_orig * final_intensity) / max_orig;
+    // 4. REPROYECCIÓN CROMÁTICA CON REDONDEO FLOTANTE EXACTO (+ 0.5f)
+    // Erradica los saltos cromáticos recuperando los canales secundarios.
+    // Ej: 0.65 redondea a 1 en lugar de truncarse destructivamente a 0.
+    *r_out = (uint32_t)( ((float)r_orig * target) / (float)max_orig + 0.5f );
+    *g_out = (uint32_t)( ((float)g_orig * target) / (float)max_orig + 0.5f );
+    *b_out = (uint32_t)( ((float)b_orig * target) / (float)max_orig + 0.5f );
 }
 
 static inline uint32_t level_to_color(uint8_t val) {
@@ -178,7 +177,7 @@ static void draw_palette_ui() {
     for(int y=0; y<7; y++){
         float row_scale = (8.0f - (float)y) / 8.0f;
         uint32_t gam_val = (uint32_t)(row_scale * (float)BRIGHTNESS + 0.5f);
-        if (gam_val < 3) gam_val = 3; // Límite UI empatado al nuevo umbral físico
+        if (gam_val < 2) gam_val = 2; 
         trellis.setPixelColor(y * NUM_COLS, (gam_val << 16) | (gam_val << 8) | gam_val);
     }
     trellis.setPixelColor(7 * NUM_COLS, 0x444444); 
@@ -365,7 +364,7 @@ extern "C" void device_init() {
     memset(mmap,         0, sizeof(mmap));
     memset(prevLedBuffer, 0, sizeof(prevLedBuffer));
     
-    set_dynamic_gamma(3); 
+    set_dynamic_gamma(2); 
     sendLeds_iii();
 
     gpio_put(LED_PIN, 0);
