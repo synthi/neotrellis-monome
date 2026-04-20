@@ -1,6 +1,6 @@
 /*
  * device.cpp - NeoTrellis device implementation for iii (PALETTED EDITION V4 - ULTIMATE)
- * FORENSICALLY CORRECTED ENGINE V3: SWEET SPOT HARDWARE LIMITS
+ * FORENSICALLY CORRECTED ENGINE V7: PLASMA ENGINE + CHROMATIC RECTIFICATION
  */
 
 #include "MonomeSerialDevice.h"
@@ -10,6 +10,7 @@
 #include "pico/stdlib.h"
 #include "tusb.h"
 #include <string.h>
+#include <math.h> // REQUERIDO PARA EL MOTOR DE PLASMA NATIVO
 
 extern "C" {
 #include "device.h"
@@ -68,7 +69,7 @@ static void grid_add_event(uint8_t x, uint8_t y, uint8_t z) {
 }
 
 // ===========================================================================
-// MATRIZ DE PALETAS ORIGINAL
+// MATRIZ DE PALETAS FORENSE (CALIBRACIÓN CROMÁTICA EXACTA V7)
 // ===========================================================================
 
 static const uint8_t allpalettes[25][3][16] = {
@@ -76,20 +77,20 @@ static const uint8_t allpalettes[25][3][16] = {
   {{0,45,55,65,75,85,96,107,118,133,152,171,190,210,230,250},{0,45,55,65,75,85,96,107,118,133,152,171,190,210,230,250},{0,45,55,65,75,85,96,107,118,133,152,171,190,210,230,250}},
   // 1 (Paleta 2)
   {{0,43,52,66,80,95,110,125,140,155,170,185,200,215,230,250},{0,43,52,66,80,95,110,125,140,155,170,185,200,215,230,250},{0,22,31,33,40,48,55,62,70,77,85,92,100,107,115,125}},
-  // 2 (Paleta 3) - CORREGIDA: Gradiente cian/teal perfectamente suave
+  // 2 (Paleta 3) - Corregido salto Luma
   {{0, 15, 25, 35, 45, 55, 65, 75, 85, 95, 105, 115, 125, 140, 155, 175},{0, 30, 50, 70, 90, 110, 130, 150, 170, 190, 210, 225, 240, 250, 255, 255},{0, 30, 50, 70, 90, 110, 130, 150, 170, 190, 210, 225, 240, 250, 255, 255}},
-  // 3 (Paleta 4) - CORREGIDA: Valor 1 anaranjado equilibrado
-  {{0, 100, 120, 150, 180, 210, 240, 255, 255, 255, 255, 255, 255, 255, 255, 255},{0, 50, 65, 85, 110, 135, 160, 180, 200, 214, 224, 231, 236, 238, 239, 240},{0, 0, 0, 0, 2, 5, 11, 20, 32, 50, 72, 97, 125, 156, 187, 220}},
-  // 4 (Paleta 5) - CORREGIDA: Valores bajos más anaranjados, menos rojo agresivo
-  {{0, 70, 85, 100, 115, 130, 145, 160, 175, 190, 205, 220, 235, 250, 255, 255},{0, 35, 45, 55, 65, 75, 85, 95, 105, 115, 130, 145, 160, 180, 200, 220},{0, 4, 5, 6, 7, 8, 9, 11, 15, 25, 39, 57, 78, 101, 126, 152}},
-  // 5 (Paleta 6) - CORREGIDA: Salto oscuro eliminado, transición suave de Luma
-  {{0, 15, 18, 22, 26, 32, 38, 45, 52, 60, 68, 78, 90, 105, 120, 140},{0, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 165, 180, 195, 210},{0, 85, 95, 105, 115, 125, 135, 145, 155, 165, 175, 185, 195, 210, 225, 240}},
+  // 3 (Paleta 4) - Naranja inicial equilibrado, sin rojo crudo
+  {{0, 90, 120, 150, 180, 210, 240, 255, 255, 255, 255, 255, 255, 255, 255, 255},{0, 60, 80, 100, 120, 140, 160, 180, 200, 214, 224, 231, 236, 238, 239, 240},{0, 0, 0, 0, 2, 5, 11, 20, 32, 50, 72, 97, 125, 156, 187, 220}},
+  // 4 (Paleta 5) - Naranja oscuro inicial estabilizado
+  {{0, 70, 85, 100, 115, 130, 145, 160, 175, 190, 205, 220, 235, 250, 255, 255},{0, 45, 55, 65, 75, 85, 95, 105, 115, 125, 135, 145, 160, 180, 200, 220},{0, 4, 5, 6, 7, 8, 9, 11, 15, 25, 39, 57, 78, 101, 126, 152}},
+  // 5 (Paleta 6) - Luma suave en los 3 primeros valores
+  {{0, 16, 20, 24, 28, 32, 38, 45, 52, 60, 68, 78, 90, 105, 120, 140},{0, 55, 65, 75, 85, 95, 105, 115, 125, 135, 145, 155, 165, 180, 195, 210},{0, 90, 105, 120, 135, 150, 165, 180, 195, 210, 225, 240, 255, 255, 255, 255}},
   // 6 (Paleta 7)
   {{0, 21, 24, 28, 33, 39 ,46, 54, 64, 76, 90, 105, 122, 140, 158, 177},{0, 77, 89, 101, 107, 124, 135, 146, 156, 166, 175, 184, 193, 201 ,210 ,218},{0, 4, 5, 6, 7, 8, 9, 11, 15, 25, 39, 57, 78, 101, 126, 152}},
-  // 7 (Paleta 8) - CORREGIDA: Luminancia garantizada, magenta unificado
-  {{0, 35, 50, 65, 80, 95, 110, 125, 140, 155, 170, 185, 200, 215, 230, 250},{0, 15, 25, 35, 45, 55, 65, 75, 85, 95, 105, 115, 125, 140, 155, 170},{0, 35, 50, 65, 80, 95, 110, 125, 140, 155, 170, 185, 200, 215, 230, 250}},
-  // 8 (Paleta 9) - CORREGIDA: Bug del índice [0] (Apagado) reparado. Salto y tinte unificados.
-  {{0, 20, 30, 45, 60, 75, 96, 111, 127, 143, 159, 175, 191, 207, 223, 240},{0, 12, 22, 35, 50, 68, 88, 107, 129, 150, 169, 188, 200, 211, 224, 244},{0, 60, 80, 100, 115, 130, 140, 145, 150, 155, 165, 175, 191, 209, 224, 237}},
+  // 7 (Paleta 8) - Curva Magenta con paso lineal infalible
+  {{0, 25, 40, 55, 70, 85, 100, 115, 130, 145, 160, 175, 190, 205, 220, 240},{0, 10, 15, 20, 30, 40, 50, 65, 80, 95, 110, 125, 140, 155, 170, 185},{0, 25, 40, 55, 70, 85, 100, 115, 130, 145, 160, 175, 190, 205, 220, 240}},
+  // 8 (Paleta 9) - Unificación de matriz (Eliminado el 77 en el índice apagado)
+  {{0, 15, 25, 35, 45, 55, 70, 90, 110, 130, 150, 170, 190, 210, 230, 250},{0, 10, 20, 30, 40, 55, 70, 90, 110, 130, 150, 170, 190, 210, 230, 245},{0, 35, 55, 75, 95, 115, 130, 145, 155, 165, 175, 185, 200, 215, 230, 240}},
   // 9 (Paleta 10)
   {{0, 10 ,11, 12, 13, 14, 15, 16, 20, 25, 35, 45, 55, 65, 75, 88},{100, 115, 133, 150, 159, 167, 175, 180, 185, 189, 197, 205, 213, 220, 230, 240},{102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102, 102}},
   // 10 (Paleta 11)
@@ -104,41 +105,43 @@ static const uint8_t allpalettes[25][3][16] = {
   {{0,43,52,66,80,95,110,125,140,155,170,185,200,215,230,250},{0,43,52,66,80,95,110,125,140,155,170,185,200,215,230,250},{0, 4, 5, 6, 7, 8, 9, 11, 15, 25, 39, 57, 78, 101, 126, 152}},
   // 15 (Paleta 16)
   {{0, 100, 120, 140, 160, 180, 200, 215, 230, 240, 250, 255, 255, 255, 255, 255},{0, 0, 0, 0, 0, 10, 25, 45, 65, 85, 110, 135, 160, 185, 210, 230},{0, 0, 0, 5, 15, 30, 50, 70, 90, 110, 135, 160, 185, 210, 230, 245}},
-  // 16 (Paleta 17)
-  {{0, 120, 140, 160, 180, 200, 220, 240, 255, 255, 255, 255, 255, 255, 255, 255},{0, 0, 10, 25, 45, 65, 85, 105, 125, 145, 165, 185, 200, 215, 230, 245},{0, 0, 0, 0, 0, 0, 0, 0, 10, 30, 50, 75, 100, 130, 160, 190}},
-  // 17 (Paleta 18)
-  {{0, 5, 15, 30, 50, 70, 90, 110, 130, 150, 170, 190, 210, 225, 240, 255},{0, 25, 45, 65, 85, 105, 125, 145, 165, 185, 205, 220, 235, 245, 255, 255},{0, 60, 80, 100, 120, 140, 160, 180, 200, 215, 230, 240, 250, 255, 255, 255}},
+  // 16 (Paleta 17) - NUEVA: "Bioluminescence / Aurora" (Deep Purple -> Cyan -> Lime Green)
+  {{0, 10, 20, 15, 10, 5, 0, 0, 0, 20, 50, 90, 140, 190, 220, 255},{0, 5, 10, 30, 60, 90, 130, 170, 210, 230, 250, 255, 255, 255, 255, 255},{0, 30, 60, 100, 140, 180, 210, 240, 255, 255, 255, 220, 180, 140, 100, 50}},
+  // 17 (Paleta 18) - Valor 1 y 2 sincronizados a cromaticidad de Azul Claro exacta
+  {{0, 10, 15, 30, 50, 70, 90, 110, 130, 150, 170, 190, 210, 225, 240, 255},{0, 30, 45, 65, 85, 105, 125, 145, 165, 185, 205, 220, 235, 245, 255, 255},{0, 55, 80, 100, 120, 140, 160, 180, 200, 215, 230, 240, 250, 255, 255, 255}},
   // 18 (Paleta 19)
   {{0, 5, 15, 27, 40, 51, 58, 66, 92, 125, 152, 178, 188, 201, 219, 237},{0, 17, 55, 87, 114, 132, 141, 150, 160, 169, 175, 182, 170, 166, 182, 212},{0, 117, 120, 123, 126, 118, 99, 79, 75, 83, 88, 93, 98, 119, 159, 206}},
-  // 19 (Paleta 20) - CORREGIDA: Colores definidos (Blanco Frío neutral), sin tintes en valores bajos
-  {{0, 40, 55, 75, 95, 115, 135, 155, 175, 195, 215, 235, 255, 255, 255, 255},{0, 45, 60, 80, 100, 120, 140, 160, 180, 200, 220, 240, 255, 255, 255, 255},{0, 50, 65, 85, 105, 125, 145, 165, 185, 205, 225, 245, 255, 255, 255, 255}},
+  // 19 (Paleta 20) - Blanco Frío Definido (Sin desvío verdoso ni amarillento en sombras)
+  {{0, 25, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 240, 255, 255, 255},{0, 30, 50, 75, 100, 125, 150, 175, 200, 225, 250, 255, 255, 255, 255, 255},{0, 35, 60, 90, 120, 150, 180, 210, 240, 255, 255, 255, 255, 255, 255, 255}},
   // 20 (Paleta 21)
   {{0, 10, 20, 35, 50, 70, 90, 110, 130, 150, 170, 190, 210, 230, 245, 255},{0, 5, 15, 30, 45, 65, 85, 105, 125, 145, 165, 185, 205, 225, 240, 255},{0, 40, 60, 80, 100, 120, 140, 160, 180, 200, 215, 230, 240, 250, 255, 255}},
   // 21 (Paleta 22)
   {{0, 70, 100, 130, 160, 190, 220, 240, 255, 255, 255, 255, 255, 255, 255, 255},{0, 0, 0, 10, 25, 45, 70, 95, 120, 145, 170, 195, 215, 235, 245, 255},{0, 0, 0, 0, 0, 0, 0, 0, 10, 30, 50, 80, 110, 150, 200, 255}},
   // 22 (Paleta 23)
   {{0, 25, 45, 70, 100, 130, 160, 190, 215, 235, 250, 255, 255, 255, 255, 255},{0, 0, 0, 5, 15, 30, 50, 75, 100, 130, 160, 190, 215, 235, 250, 255},{0, 70, 100, 130, 160, 190, 215, 235, 250, 255, 255, 255, 255, 255, 255, 255}},
-  // 23 (Paleta 24) - CORREGIDA: Transición final de Rojo intenso a Magenta/Blanco en vez de Amarillo.
-  {{0, 15, 30, 50, 75, 105, 135, 165, 195, 220, 240, 255, 255, 255, 255, 255},{0,  0,  5, 15, 25,  40,  55,  70,  85, 100, 115, 130, 150, 175, 210, 255},{0, 70, 100, 125, 145, 160, 150, 130, 105,  85,  75,  85, 110, 150, 200, 255}},
-  // 24 (Paleta 25 - Array Vacio)
+  // 23 (Paleta 24) - Cierre Cálido/Rosa (Erradicado el amarillo tóxico)
+  {{0, 20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 240, 255, 255, 255},{0, 0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 60, 80, 120, 200},{0, 40, 60, 80, 90, 100, 110, 120, 130, 140, 150, 170, 200, 220, 240, 255}},
+  // 24 (Paleta 25)
   {{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}}
 };
 
-static uint8_t selected_palette = 11; // CORRECCIÓN: Índice 11 corresponde a la Paleta 12.
+static uint8_t selected_palette = 11;
 static uint8_t current_page = 1; 
 
 static bool key_13_7 = false;
 static bool key_14_7 = false;
 static bool key_15_7 = false;
+static bool key_0_7_held = false; // FLAG: Botón Row 1 Fila 8 mantenido
 static bool palette_ui_active = false;
 static bool palette_preview_active = false;
+static bool plasma_preview_active = false; // FLAG: Motor Plasma I/O
 static uint32_t palette_preview_start = 0;
 
 // ===========================================================================
-// MOTOR VECTORIAL FORENSE V6 (ANTI-TRUNCAMIENTO CROMÁTICO)
+// MOTOR VECTORIAL FORENSE V7 (ANTI-TRUNCAMIENTO CROMÁTICO)
 // ===========================================================================
 
-static uint8_t current_brightness_row = 2; // CORRECCIÓN: Fila 3 es el índice 2
+static uint8_t current_brightness_row = 2; // Fila 3 es el índice 2
 
 static void set_dynamic_gamma(uint8_t row) {
     if (row < 7) current_brightness_row = row;
@@ -172,8 +175,6 @@ static void get_color_for_level(uint8_t pal_idx, uint8_t val, uint32_t *r_out, u
     float target = luma * quad * row_scale * (float)BRIGHTNESS;
 
     // 3. SUELO ANTI-QUANTIZACIÓN
-    // Ajustado para asegurar que los canales desaturados alcancen simetría 
-    // y no colapsen en tintes falsos a niveles extremadamente bajos de hardware.
     float floor_val = ((float)val * 1.1f) + 0.9f;
 
     if (target < floor_val) {
@@ -185,8 +186,6 @@ static void get_color_for_level(uint8_t pal_idx, uint8_t val, uint32_t *r_out, u
     }
 
     // 4. REPROYECCIÓN CROMÁTICA CON REDONDEO FLOTANTE EXACTO (+ 0.5f)
-    // Erradica los saltos cromáticos recuperando los canales secundarios.
-    // Ej: 0.65 redondea a 1 en lugar de truncarse destructivamente a 0.
     *r_out = (uint32_t)( ((float)r_orig * target) / (float)max_orig + 0.5f );
     *g_out = (uint32_t)( ((float)g_orig * target) / (float)max_orig + 0.5f );
     *b_out = (uint32_t)( ((float)b_orig * target) / (float)max_orig + 0.5f );
@@ -236,7 +235,7 @@ static void check_palette_preview() {
 }
 
 static void sendLeds_iii() {
-    if (palette_ui_active || palette_preview_active) return;
+    if (palette_ui_active || palette_preview_active || plasma_preview_active) return;
     for (int i = 0; i < NUM_ROWS * NUM_COLS; i++) {
         trellis.setPixelColor(i, level_to_color(local_leds[i]));
     }
@@ -244,7 +243,7 @@ static void sendLeds_iii() {
 }
 
 static void sendLeds_monome() {
-    if (palette_ui_active || palette_preview_active) return;
+    if (palette_ui_active || palette_preview_active || plasma_preview_active) return;
     bool dirty = false;
     for (int i = 0; i < NUM_ROWS * NUM_COLS; i++) {
         uint8_t val = mdp.leds[i];
@@ -267,6 +266,21 @@ static TrellisCallback keyCallback(keyEvent evt) {
     if (x == 13 && y == 7) key_13_7 = (z == 1);
     if (x == 14 && y == 7) key_14_7 = (z == 1);
     if (x == 15 && y == 7) key_15_7 = (z == 1);
+    
+    // FLAG DE RETENCIÓN PARA PLASMA (x=0, y=7)
+    if (x == 0 && y == 7) {
+        key_0_7_held = (z == 1);
+    }
+
+    // SI PLASMA ESTÁ ACTIVO, CUALQUIER BOTÓN LO CIERRA Y VUELVE AL UI
+    if (plasma_preview_active) {
+        if (z == 1) { 
+            plasma_preview_active = false;
+            palette_ui_active = true;
+            draw_palette_ui();
+        }
+        return 0;
+    }
 
     if (key_13_7 && key_14_7 && key_15_7 && !palette_ui_active && !palette_preview_active) {
         palette_ui_active = true;
@@ -288,18 +302,26 @@ static TrellisCallback keyCallback(keyEvent evt) {
                 int chosen = y + (8 * current_page);
                 if (chosen < 25) {
                     selected_palette = chosen;
-                    palette_ui_active = false;
-                    palette_preview_active = true;
-                    palette_preview_start = to_ms_since_boot(get_absolute_time());
-                    for(int i=0; i<NUM_ROWS; i++){
-                        for(int j=0; j<NUM_COLS; j++){
-                            uint8_t val = j % 16;
-                            uint32_t r, g, b;
-                            get_color_for_level(selected_palette, val, &r, &g, &b);
-                            trellis.setPixelColor(i * NUM_COLS + j, (r << 16) | (g << 8) | b);
+                    
+                    if (key_0_7_held) {
+                        // ENTRAR AL MODO PLASMA
+                        palette_ui_active = false;
+                        plasma_preview_active = true;
+                    } else {
+                        // PREVIEW NORMAL (1 SEGUNDO)
+                        palette_ui_active = false;
+                        palette_preview_active = true;
+                        palette_preview_start = to_ms_since_boot(get_absolute_time());
+                        for(int i=0; i<NUM_ROWS; i++){
+                            for(int j=0; j<NUM_COLS; j++){
+                                uint8_t val = j % 16;
+                                uint32_t r, g, b;
+                                get_color_for_level(selected_palette, val, &r, &g, &b);
+                                trellis.setPixelColor(i * NUM_COLS + j, (r << 16) | (g << 8) | b);
+                            }
                         }
+                        trellis.show();
                     }
-                    trellis.show();
                 }
             }
         }
@@ -378,7 +400,6 @@ extern "C" void device_init() {
         }
     }
     
-    // Truncamiento HW anulado; delegamos 100% control a la precisión flotante SW
     for (uint8_t x = 0; x < NUM_COLS / 4; x++) {
         for (uint8_t y = 0; y < NUM_ROWS / 4; y++) {
             trellis_array[y][x].pixels.setBrightness(255);
@@ -389,7 +410,7 @@ extern "C" void device_init() {
     memset(mmap,         0, sizeof(mmap));
     memset(prevLedBuffer, 0, sizeof(prevLedBuffer));
     
-    set_dynamic_gamma(2); 
+    set_dynamic_gamma(2); // Sincronizado a Nivel 3
     sendLeds_iii();
 
     gpio_put(LED_PIN, 0);
@@ -414,9 +435,32 @@ extern "C" void device_init() {
     }
 }
 
+static uint32_t last_plasma_update = 0;
+
 extern "C" void device_task() {
     trellis.read();
     check_palette_preview(); 
+
+    // MODULACIÓN DE PLASMA EN TIEMPO REAL (~60fps target limit)
+    if (plasma_preview_active) {
+        uint32_t now = to_ms_since_boot(get_absolute_time());
+        if (now - last_plasma_update >= 16) {
+            last_plasma_update = now;
+            float t = (float)now * 0.0005f; // Factor de tiempo ultra-fluido
+            for(int y=0; y<NUM_ROWS; y++) {
+                for(int x=0; x<NUM_COLS; x++) {
+                    // Traducción FPU de C++: func[1] del Lua Original
+                    float val_f = 16.0f * (sinf((float)x / 3.0f + t * 1.0f) + cosf((float)y / 5.0f + t * 1.1f));
+                    int val = abs((int)val_f) % 16;
+                    
+                    uint32_t r, g, b;
+                    get_color_for_level(selected_palette, val, &r, &g, &b);
+                    trellis.setPixelColor(y * NUM_COLS + x, (r << 16) | (g << 8) | b);
+                }
+            }
+            trellis.show();
+        }
+    }
 
     uint8_t ewr = 0;
     while (grid_event_count > 0) {
@@ -519,6 +563,25 @@ extern "C" void device_monome_loop() {
         tud_task();
         mdp.poll();
         check_palette_preview(); 
+
+        // LLAMADA AL MOTOR PLASMA EN MODO MONOME
+        if (plasma_preview_active) {
+            uint32_t now = to_ms_since_boot(get_absolute_time());
+            if (now - last_plasma_update >= 16) {
+                last_plasma_update = now;
+                float t = (float)now * 0.0005f; 
+                for(int y=0; y<NUM_ROWS; y++) {
+                    for(int x=0; x<NUM_COLS; x++) {
+                        float val_f = 16.0f * (sinf((float)x / 3.0f + t * 1.0f) + cosf((float)y / 5.0f + t * 1.1f));
+                        int val = abs((int)val_f) % 16;
+                        uint32_t r, g, b;
+                        get_color_for_level(selected_palette, val, &r, &g, &b);
+                        trellis.setPixelColor(y * NUM_COLS + x, (r << 16) | (g << 8) | b);
+                    }
+                }
+                trellis.show();
+            }
+        }
 
         uint32_t now = to_ms_since_boot(get_absolute_time());
         if (now - last_refresh >= 16) {
