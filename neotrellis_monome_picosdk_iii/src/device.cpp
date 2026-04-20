@@ -3,14 +3,22 @@
  * FORENSICALLY CORRECTED ENGINE V7: PLASMA ENGINE + CHROMATIC RECTIFICATION
  */
 
-#include "MonomeSerialDevice.h"
-#include "Adafruit_seesaw/Adafruit_NeoTrellis.h"
-#include "config.h"
+// 1. LIBRERÍAS ESTÁNDAR PRIMERO (Inmunes a la contaminación de macros)
+#include <math.h>
+#include <string.h>
 #include "pico/time.h"
 #include "pico/stdlib.h"
 #include "tusb.h"
-#include <string.h>
-#include <math.h> // REQUERIDO PARA EL MOTOR DE PLASMA NATIVO
+
+// 2. LIBRERÍAS DE TERCEROS DESPUÉS
+#include "MonomeSerialDevice.h"
+#include "Adafruit_seesaw/Adafruit_NeoTrellis.h"
+
+// 3. NEUTRALIZACIÓN DE MACROS TÓXICAS DE ADAFRUIT
+#undef min
+#undef max
+
+#include "config.h"
 
 extern "C" {
 #include "device.h"
