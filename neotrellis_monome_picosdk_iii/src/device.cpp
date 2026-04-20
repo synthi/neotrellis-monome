@@ -1,6 +1,6 @@
 /*
  * device.cpp - NeoTrellis device implementation for iii (PALETTED EDITION V4 - ULTIMATE)
- * FORENSICALLY CORRECTED ENGINE V2: FLOAT PRECISION + DYNAMIC FLOOR
+ * FORENSICALLY CORRECTED ENGINE V3: SWEET SPOT HARDWARE LIMITS
  */
 
 #include "MonomeSerialDevice.h"
@@ -109,8 +109,8 @@ static bool palette_ui_active = false;
 static bool palette_preview_active = false;
 static uint32_t palette_preview_start = 0;
 
-// ===========================================================================
-// MOTOR VECTORIAL FORENSE V2 (PRECISIÓN FLOTANTE + ESPACIADO GARANTIZADO)
+/// ===========================================================================
+// MOTOR VECTORIAL FORENSE V4 (EQUILIBRIO TERMODINÁMICO DE DIFUSIÓN)
 // ===========================================================================
 
 static uint8_t current_brightness_row = 3; 
@@ -138,7 +138,7 @@ static void get_color_for_level(uint8_t pal_idx, uint8_t val, uint32_t *r_out, u
         return;
     }
 
-    // 1. Simulación Cuadrática Exacta
+    // 1. Simulación Cuadrática Exacta 
     float luma = (float)max_orig / 255.0f;
     float quad = (float)val / 15.0f;
     
@@ -146,13 +146,11 @@ static void get_color_for_level(uint8_t pal_idx, uint8_t val, uint32_t *r_out, u
     float row_scale = (8.0f - (float)current_brightness_row) / 8.0f;
     float target = luma * quad * row_scale * (float)BRIGHTNESS;
 
-    // 3. EL "SWEET SPOT" (Suelo Dinámico Milimétrico)
-    // Genera una rampa matemática inquebrantable para los rangos más bajos:
-    // val=1 -> 1.0 (Mínimo hardware absoluto, tenue pero visible)
-    // val=2 -> 1.75 (Redondea a 2, 100% de contraste visual respecto a 1)
-    // val=3 -> 2.50 (Redondea a 3, 50% de contraste visual respecto a 2)
-    // Erradica el brillo excesivo anterior forzando pasos enteros puros.
-    float floor_val = ((float)val * 0.75f) + 0.25f;
+    // 3. EQUILIBRIO PERFECTO (Suelo Dinámico V4)
+    // val=1 -> 2.7 (Redondea a 3, penetra la silicona sin deslumbrar)
+    // val=2 -> 3.9 (Redondea a 4, contraste del 33% visible)
+    // val=3 -> 5.1 (Redondea a 5)
+    float floor_val = ((float)val * 1.2f) + 1.5f;
 
     if (target < floor_val) {
         target = floor_val;
@@ -170,11 +168,17 @@ static void get_color_for_level(uint8_t pal_idx, uint8_t val, uint32_t *r_out, u
     *b_out = (b_orig * final_intensity) / max_orig;
 }
 
+static inline uint32_t level_to_color(uint8_t val) {
+    uint32_t r, g, b;
+    get_color_for_level(selected_palette, val, &r, &g, &b);
+    return (r << 16) | (g << 8) | b;
+}
+
 static void draw_palette_ui() {
     for(int y=0; y<7; y++){
         float row_scale = (8.0f - (float)y) / 8.0f;
         uint32_t gam_val = (uint32_t)(row_scale * (float)BRIGHTNESS + 0.5f);
-        if (gam_val < 2) gam_val = 2; // Ajustado al nuevo sweet spot de hardware
+        if (gam_val < 3) gam_val = 3; // Límite UI empatado al nuevo umbral físico
         trellis.setPixelColor(y * NUM_COLS, (gam_val << 16) | (gam_val << 8) | gam_val);
     }
     trellis.setPixelColor(7 * NUM_COLS, 0x444444); 
