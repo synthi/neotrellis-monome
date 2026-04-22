@@ -93,8 +93,17 @@ const uint8_t addrRowTwo[4] = {0x33,0x31,0x3E,0x36};
   #define I2C_BUS i2c1
   #define I2C_SDA 26
   #define I2C_SCL 27
-  #define LED_PIN 26  //  LED1
-  #define LED_PIN2 25 //  LED2
+  
+  // LED_PIN (Modo Monome): Asignado al GP28. 
+  // En la Pico es un pin seguro. En el Zero, suelden un LED físico al pad 28.
+  #define LED_PIN 28  
+  
+  // LED_PIN2 (Modo iii): Asignado al GP25.
+  // En la Pico encenderá el LED verde integrado. 
+  // En el Zero, el GP25 no existe físicamente, la instrucción se ejecutará 
+  // en la memoria sin causar errores. Si desean luz en el Zero para este modo, 
+  // cambien este valor a 29 y suelden otro LED al pad 29.
+  #define LED_PIN2 25 
 #endif
 
 // DEFAULT FOR PICO
